@@ -134,18 +134,35 @@
     .chart-action.primary { color: white; background: var(--primary); }
     .chart-action.primary:hover { background: var(--primary-dark); }
     .chart-action.secondary { color: #64718a; background: #f0f2f7; }
-    .chart-point-list { display: grid; gap: 10px; }
-    .chart-point-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 12px; border: 1px solid #edf0f5; border-radius: 11px; }
+    .chart-action[hidden] { display: none; }
+    .chart-point-section { margin-top: 20px; padding: 18px; border: 1px solid #e8ecf3; border-radius: 13px; background: #fbfcfe; }
+    .chart-point-section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .chart-point-section-head h3 { margin: 0; font-size: 14px; }
+    .chart-point-section-head p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+    .chart-point-list { display: grid; align-content: start; gap: 9px; max-height: 370px; overflow-y: auto; padding: 2px 5px 2px 2px; scrollbar-gutter: stable; }
+    .chart-point-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px 14px; padding: 12px; border: 1px solid #e8ecf3; border-radius: 11px; background: white; }
+    .chart-point-row.editing { border-color: #aab3ff; background: #f9faff; box-shadow: 0 2px 10px rgba(70,88,216,.09); }
     .chart-point-number { display: grid; place-items: center; flex: 0 0 23px; width: 23px; height: 23px; border-radius: 50%; color: #fff; background: var(--primary); font-size: 10px; font-weight: 800; }
     .chart-point-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .chart-point-title { color: var(--ink); font-size: 12px; font-weight: 750; }
     .chart-point-actions { display: flex; align-items: center; gap: 4px; }
     .chart-point-row button { border: 0; background: transparent; color: #8a94a5; font-size: 17px; }
     .chart-point-row button:hover { color: #c13c4a; }
-    .chart-point-values { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
-    .chart-point-metric { min-width: 0; padding: 7px 8px; border-radius: 7px; background: #f6f8fc; }
-    .chart-point-metric span { display: block; color: var(--muted); font-size: 9px; }
-    .chart-point-metric strong { display: block; margin-top: 2px; overflow-wrap: anywhere; color: var(--ink); font-size: 10px; }
+    .chart-point-values-wrap { grid-column: 1 / -1; overflow-x: auto; padding-bottom: 3px; }
+    .chart-point-values { display: grid; grid-template-columns: repeat(8, minmax(108px, 1fr)); min-width: 890px; gap: 6px; }
+    .chart-point-metric { min-width: 0; padding: 8px 9px; border: 1px solid #eef1f6; border-radius: 8px; background: #f8f9fc; }
+    .chart-point-metric span { display: block; color: var(--muted); font-size: 9px; white-space: nowrap; }
+    .chart-point-metric strong { display: block; margin-top: 3px; overflow-wrap: anywhere; color: var(--ink); font-size: 11px; }
+    .chart-point-editor { display: grid; grid-column: 1 / -1; gap: 11px; padding: 14px; border: 1px solid #e2e6ff; border-radius: 10px; background: white; box-shadow: inset 3px 0 #6676f5; }
+    .chart-point-editor-title { color: #3444b9; font-size: 12px; font-weight: 750; }
+    .chart-point-editor .chart-input-pair { gap: 12px; }
+    .chart-point-editor label { display: block; margin-bottom: 5px; color: #69768c; font-size: 10px; font-weight: 750; }
+    .chart-point-editor-control { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(72px, .7fr); gap: 6px; }
+    .chart-point-editor select, .chart-point-editor input { width: 100%; height: 38px; border: 1px solid #dfe4ed; border-radius: 8px; background: white; color: var(--ink); font-size: 12px; }
+    .chart-point-editor select { padding: 0 8px; }
+    .chart-point-editor input { padding: 0 9px; }
+    .chart-point-editor select:focus, .chart-point-editor input:focus { outline: none; border-color: #8792f1; box-shadow: 0 0 0 3px rgba(70,88,216,.1); }
+    .chart-point-editor .chart-actions { margin: 0; }
     .psychro-results-title { margin: 18px 0 8px; color: #64718a; font-size: 11px; font-weight: 750; }
     .psychro-results { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .chart-empty { color: var(--muted); padding: 10px 2px; font-size: 11px; }
@@ -189,7 +206,9 @@
       .chart-controls h3, .chart-controls > p, .chart-error { grid-column: 1 / -1; }
       .chart-controls .chart-field { margin-bottom: 8px; }
       .psychro-results { grid-template-columns: 1fr; }
-      .chart-point-values { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .chart-point-section { padding: 14px; }
+      .chart-point-list { max-height: 300px; }
+      .chart-point-editor .chart-input-pair { grid-template-columns: 1fr; gap: 9px; }
       .side-panel { display: block; }
     }
   </style>
@@ -288,13 +307,21 @@
                 <input id="pressure" type="number" step="any" value="101.325">
               </div>
               <div class="chart-error" id="chart-error" role="alert"></div>
+            </div>
+          </div>
+          <section class="chart-point-section" aria-labelledby="chart-point-title">
+            <div class="chart-point-section-head">
+              <div>
+                <h3 id="chart-point-title">Titik &amp; parameter proses</h3>
+                <p>Parameter ditampilkan mendatar untuk setiap titik. Geser ke samping bila perlu.</p>
+              </div>
               <div class="chart-actions">
                 <button type="button" class="chart-action primary" id="add-chart-point">＋ Tambah titik</button>
                 <button type="button" class="chart-action secondary" id="clear-chart-points">Hapus semua</button>
               </div>
-              <div class="chart-point-list" id="chart-point-list" aria-label="Daftar titik proses"></div>
             </div>
-          </div>
+            <div class="chart-point-list" id="chart-point-list" aria-label="Daftar titik proses"></div>
+          </section>
           <div class="psychro-results-title">Parameter kondisi input saat ini</div>
           <div class="psychro-results">
           <div class="metric"><span>Suhu bola kering</span><strong id="current-db">—</strong></div>
@@ -520,6 +547,7 @@
       { id: "ah", label: "Kelembapan absolut", si: "g/m³", ip: "gr/ft³", scale: 10 }
     ];
     let psychroPoints = [];
+    let editingPsychroPoint = null;
 
     function dewPointFromPressure(vaporPressure) {
       let low = -100, high = 150;
@@ -750,13 +778,15 @@
       return null;
     }
 
-    function currentPsychroInput(pressurePa) {
-      const firstProperty = $("property-one").value;
-      const secondProperty = $("property-two").value;
-      const firstValue = Number($("value-one").value);
-      const secondValue = Number($("value-two").value);
+    function currentPsychroInput(pressurePa, inputs = null) {
+      const firstProperty = inputs ? inputs.firstProperty : $("property-one").value;
+      const secondProperty = inputs ? inputs.secondProperty : $("property-two").value;
+      const firstRaw = inputs ? inputs.firstValue : $("value-one").value;
+      const secondRaw = inputs ? inputs.secondValue : $("value-two").value;
+      const firstValue = Number(firstRaw);
+      const secondValue = Number(secondRaw);
       if (firstProperty === secondProperty) return { error: "Pilih dua properti input yang berbeda." };
-      if (!$("value-one").value.trim() || !$("value-two").value.trim() ||
+      if (!String(firstRaw).trim() || !String(secondRaw).trim() ||
           !Number.isFinite(firstValue) || !Number.isFinite(secondValue) || !Number.isFinite(pressurePa) || pressurePa <= 0) {
         return { error: "Isi kedua nilai properti dan tekanan atmosfer dengan angka yang valid." };
       }
@@ -793,7 +823,7 @@
       const pressurePa = ip ? pressureInput * 6894.757293 : pressureInput * 1000;
       psychroPoints.forEach((point, index) => {
         const row = document.createElement("div");
-        row.className = "chart-point-row";
+        row.className = "chart-point-row" + (point === editingPsychroPoint ? " editing" : "");
         const head = document.createElement("div");
         head.className = "chart-point-head";
         const number = document.createElement("span");
@@ -805,24 +835,31 @@
         head.append(number, title);
         const actions = document.createElement("div");
         actions.className = "chart-point-actions";
-        const useButton = document.createElement("button");
-        useButton.type = "button";
-        useButton.textContent = "↶";
-        useButton.title = `Muat ${point.name} ke input`;
-        useButton.setAttribute("aria-label", `Muat ${point.name} ke input`);
-        useButton.addEventListener("click", () => loadPsychroPoint(point));
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.textContent = point === editingPsychroPoint ? "…" : "✎";
+        editButton.title = `Edit parameter ${point.name}`;
+        editButton.setAttribute("aria-label", `Edit parameter ${point.name}`);
+        editButton.setAttribute("aria-expanded", point === editingPsychroPoint ? "true" : "false");
+        editButton.addEventListener("click", () => {
+          editingPsychroPoint = point === editingPsychroPoint ? null : point;
+          renderPsychroPointList();
+        });
         const removeButton = document.createElement("button");
         removeButton.type = "button";
         removeButton.textContent = "×";
         removeButton.title = `Hapus ${point.name}`;
         removeButton.setAttribute("aria-label", `Hapus ${point.name}`);
         removeButton.addEventListener("click", () => {
+          if (point === editingPsychroPoint) editingPsychroPoint = null;
           psychroPoints.splice(index, 1);
           psychroPoints.forEach((item, itemIndex) => { item.name = `State ${itemIndex + 1}`; });
           renderPsychroPointList();
           drawPsychroChart();
         });
-        actions.append(useButton, removeButton);
+        actions.append(editButton, removeButton);
+        const valuesWrap = document.createElement("div");
+        valuesWrap.className = "chart-point-values-wrap";
         const values = document.createElement("div");
         values.className = "chart-point-values";
         const metrics = Number.isFinite(pressurePa) && pressurePa > 0 ? stateMetrics(point, pressurePa) : null;
@@ -846,18 +883,97 @@
           metric.append(metricLabel, metricValue);
           values.appendChild(metric);
         });
-        row.append(head, actions, values);
+        valuesWrap.appendChild(values);
+        row.append(head, actions);
+        if (point === editingPsychroPoint) row.append(createPsychroPointEditor(point, pressurePa));
+        row.append(valuesWrap);
         list.appendChild(row);
       });
     }
 
-    function loadPsychroPoint(point) {
-      $("property-one").value = "db";
-      $("property-two").value = "rh";
-      updatePsychroInputs();
-      $("value-one").value = formatNumber(canonicalToInput("db", point.tempC), 5);
-      $("value-two").value = formatNumber(point.rh, 5);
-      drawPsychroChart();
+    function createPsychroPointEditor(point, pressurePa) {
+      const editor = document.createElement("div");
+      editor.className = "chart-point-editor";
+      const editorTitle = document.createElement("div");
+      editorTitle.className = "chart-point-editor-title";
+      editorTitle.textContent = `Edit parameter · ${point.name}`;
+      const pair = document.createElement("div");
+      pair.className = "chart-input-pair";
+      const metrics = Number.isFinite(pressurePa) && pressurePa > 0 ? stateMetrics(point, pressurePa) : null;
+      const initialValues = metrics ? {
+        db: canonicalToInput("db", metrics.tempC),
+        rh: metrics.rh
+      } : { db: "", rh: "" };
+      const controls = [];
+      for (const [labelText, initialProperty, initialValue] of [
+        ["Properti 1", "db", initialValues.db],
+        ["Properti 2", "rh", initialValues.rh]
+      ]) {
+        const field = document.createElement("div");
+        const label = document.createElement("label");
+        label.textContent = labelText;
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", `${labelText} ${point.name}`);
+        select.replaceChildren(...psychroProperties.map(property => {
+          const option = document.createElement("option");
+          option.value = property.id;
+          option.textContent = `${property.label} (${activeSystem === "ip" ? property.ip : property.si})`;
+          return option;
+        }));
+        select.value = initialProperty;
+        const input = document.createElement("input");
+        input.type = "number";
+        input.step = "any";
+        input.value = formatNumber(initialValue, 6);
+        input.setAttribute("aria-label", `${labelText} value ${point.name}`);
+        const control = document.createElement("div");
+        control.className = "chart-point-editor-control";
+        select.addEventListener("change", () => {
+          const selected = psychroProperties.find(property => property.id === select.value);
+          const unit = activeSystem === "ip" ? selected.ip : selected.si;
+          input.placeholder = `${selected.label} (${unit})`;
+          const currentMetrics = stateMetrics(point, pressurePa);
+          input.value = formatNumber(canonicalToInput(select.value, propertyValue(select.value, currentMetrics.tempC, currentMetrics.ratio, pressurePa)), 6);
+        });
+        control.append(select, input);
+        field.append(label, control);
+        pair.appendChild(field);
+        controls.push({ select, input });
+      }
+      const actions = document.createElement("div");
+      actions.className = "chart-actions";
+      const save = document.createElement("button");
+      save.type = "button";
+      save.className = "chart-action primary";
+      save.textContent = "Simpan";
+      save.addEventListener("click", () => {
+        const result = currentPsychroInput(pressurePa, {
+          firstProperty: controls[0].select.value,
+          firstValue: controls[0].input.value,
+          secondProperty: controls[1].select.value,
+          secondValue: controls[1].input.value
+        });
+        if (result.error) {
+          $("chart-error").textContent = result.error;
+          return;
+        }
+        Object.assign(point, result.state);
+        $("chart-error").textContent = "";
+        editingPsychroPoint = null;
+        renderPsychroPointList();
+        drawPsychroChart();
+      });
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "chart-action secondary";
+      cancel.textContent = "Batal";
+      cancel.addEventListener("click", () => {
+        editingPsychroPoint = null;
+        renderPsychroPointList();
+      });
+      actions.append(save, cancel);
+      editor.append(editorTitle, pair, actions);
+      return editor;
     }
 
     function drawPsychroChart() {
@@ -1022,6 +1138,7 @@
     });
     $("clear-chart-points").addEventListener("click", () => {
       psychroPoints = [];
+      editingPsychroPoint = null;
       renderPsychroPointList();
       drawPsychroChart();
     });
